@@ -3,6 +3,7 @@
 import math
 import random
 import pygame
+from pygame import mixer
 
 # initialize
 pygame.init()
@@ -14,6 +15,11 @@ screen = pygame.display.set_mode((600, 700))
 pygame.display.set_caption("Stop the virus")
 icon = pygame.image.load('fierce_virus.png')
 pygame.display.set_icon(icon)
+
+# Audio
+mixer.music.set_volume(0.1)
+mixer.music.load("stop_the_virus.mp3")
+mixer.music.play(-1)
 
 # Guard
 guardImage = pygame.image.load("guard.png")
@@ -38,7 +44,7 @@ for i in range(num_of_viruses):
     virusXs.append(random.randint(0, 536))
     virusYs.append(random.randint(50, 150))
     virusX_changes.append(0.2)
-    virusY_changes.append(30)
+    virusY_changes.append(50)
 
 # MASKED VIRUS
 maskedImg = pygame.image.load("virus.png")
@@ -53,7 +59,26 @@ maskY = 600
 maskY_change = 0.5
 mask_status = "ready"
 
+# Score
 score = 0
+score_font = pygame.font.SysFont(None, 32)
+textX = 10
+textY = 10
+
+
+# Game Over
+game_over_font = pygame.font.SysFont(None, 64)
+
+
+def game_over():
+    game_over_text = game_over_font.render("GAME OVER", True, (255, 255, 255))
+    screen.blit(game_over_text, (180, 250))
+    pygame.mixer.music.unload()
+
+
+def show_score(x, y):
+    score_text = score_font.render("Score: " + str(score), True, (255, 255, 255))
+    screen.blit(score_text, (x, y))
 
 
 def guard():
@@ -117,6 +142,12 @@ while game_running:
 
     # update the virusX
     for i in range(num_of_viruses):
+        # Game over
+        if virusYs[i] >= 550:
+            for j in range(num_of_viruses):
+                virusYs[j] = 1000
+            game_over()
+            break
         virusXs[i] += virusX_changes[i]
         # ensure virus is inside the boundary,
         # change the movement direction when hit the boundary and move downward
@@ -131,6 +162,8 @@ while game_running:
         # check collision
         collision = is_collision(virusXs[i], virusYs[i], maskX, maskY)
         if collision:
+            masked_virus_sound = mixer.Sound("ahh.wav")
+            masked_virus_sound.play(0)
             virus_status = "masked"
             maskedX = virusXs[i]
             maskedY = virusYs[i]
@@ -170,6 +203,6 @@ while game_running:
 
     # display the guard
     guard()
-
+    show_score(textX, textY)
     # update the display
     pygame.display.update()
